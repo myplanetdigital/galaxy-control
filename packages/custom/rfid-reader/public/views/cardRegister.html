@@ -1,0 +1,54 @@
+<div class="form-card-type">
+  <form name="formCardType" ng-controller="CardRegistrationCtrl" ng-submit="registerCard(cardType)">
+    <h1 ng-hide="rfid == null">New ID found.</h1>
+    <h1 ng-show="rfid == null">Couldn't recognise RFID. Please, try again.</h1>
+    <h2 ng-hide="rfid == null">Please, register the new card with ID {{rfid}}</h2>
+    <div class="card-types" ng-hide="rfid == null">
+      <div class="card-type">
+        <span class="card-type-person">
+          <label>
+            <input type="radio" ng-model="cardType" value="person">
+            Person
+          </label>
+        </span>
+        <br/>
+        <span ng-show="cardType === 'person'">
+          <label>
+            Name:
+            <input type="text" ng-model="person.name">
+          </label>
+          <br/>
+          <label>
+            Email:
+            <input type="email" ng-model="person.email">
+          </label>
+        </span>
+      </div>
+      <div class="card-type">
+        <span class="card-type-resource">
+          <label>
+            <input type="radio" ng-model="cardType" value="resource">
+            Resource
+          </label>
+        </span>
+        <br/>
+        <span ng-show="cardType === 'resource'">
+          <label>
+            Description:
+            <input type="text" ng-model="resource.description">
+          </label>
+          <br/>
+          <label>
+            Category:
+            <input type="text" ng-model="resource.category">
+          </label>
+        </span>
+      </div>
+      <div class="registerBtn">
+        <input ng-show="((cardType === 'resource' && resource.description && resource.category)
+                      || (cardType === 'person' && person.name && person.email))"
+                      type="submit" id="submit" value="Register" />
+      </div>
+    </div>
+  </form>
+</div>

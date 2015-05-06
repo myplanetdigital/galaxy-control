@@ -1,0 +1,22 @@
+.form-card-type h2 {
+  text-align: center;
+}
+
+.card-types {
+  margin: 0 25%;
+}
+
+.card-type {
+  display: inline-table;
+  min-width: 49%;
+}
+
+.card-type-person,
+.card-type-resource {
+  display: block;
+  text-align: center;
+}
+
+.registerBtn {
+  text-align: center;
+}

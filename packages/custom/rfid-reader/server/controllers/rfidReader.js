@@ -4,6 +4,7 @@
  * Module dependencies.
  */
 var mongoose = require('mongoose'),
+    openPage = require('open'),
 //    Person = mongoose.model('Person');
 //    Resource = mongoose.model('Resource'),
     Tag = mongoose.model('Tag');
@@ -53,8 +54,9 @@ exports.entry = function(req, res) {
     if (result.length > 0) {
       res.json(result[0]);
     }
-    // RFID is not exists in database so will create it
+    // RFID does not exist in database so send a message and open a registration page
     else {
+      openPage('http://' + req.headers.host + '/#!/card-registration?rfid=' + rfid);
       res.json(404, { message: 'ID not found.' });
     }
   });

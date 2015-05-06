@@ -18,13 +18,13 @@ RfidReader.register(function(app, auth, database) {
 
   //We are adding a link to the main menu for all authenticated users
   RfidReader.menus.add({
-    title: 'rfidReader example page',
-    link: 'rfidReader example page',
-    roles: ['authenticated'],
-    menu: 'main'
+      title: 'rfidReader example page',
+      link: 'rfidReader example page',
+      roles: ['authenticated'],
+      menu: 'main'
   });
   
-//  RfidReader.aggregateAsset('css', 'rfidReader.css');
+  RfidReader.aggregateAsset('css', 'cardRegister.css');
 
   /**
     //Uncomment to use. Requires meanio@0.3.7 or above
