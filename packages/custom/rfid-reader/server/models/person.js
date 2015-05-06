@@ -20,9 +20,10 @@ var PersonSchema = new Schema({
     required: true,
     trim: true
   },
-  tag: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Tag'
+  rfid: {
+    type: String,
+    required: true,
+    trim: true
   },
   created: {
     type: Date,

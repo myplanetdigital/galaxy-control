@@ -11,4 +11,10 @@ module.exports = function(RfidReader, app, auth, database) {
       .post()
       .put()
       .delete();
+
+  // RFID TEST data CRUD operations
+  app.route('/populate/people')
+      .post(reader.populatePeople);
+  app.route('/populate/resources')
+      .post(reader.populateResources);
 };
