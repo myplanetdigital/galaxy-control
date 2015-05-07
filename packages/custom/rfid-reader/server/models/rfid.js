@@ -19,11 +19,7 @@ var RfidSchema = new Schema({
     type: String,
     required: true,
     trim: true
-  }
-//  ,
-//  reader: {
-//    type: mongoose.Schema.Types.ObjectId,
-//    ref: 'Reader'
-//  }
+  },
+  versionKey: false
 });
 mongoose.model('Rfid', RfidSchema);

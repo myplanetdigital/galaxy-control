@@ -13,7 +13,6 @@ var mongoose = require('mongoose'),
  */
 exports.entry = function(req, res) {
   var reqId = req.param('rfid');
-  console.log('RFID: ' + reqId);
   Rfid.find({rfid: reqId}).limit(1).exec(function(err, result) {
     if (err) {
       return res.status(500).json({
@@ -23,29 +22,78 @@ exports.entry = function(req, res) {
     // If query result contain data (array not empty) RFID is exists in database
     if (result.length > 0) {
       var rfid = result[0];
-      console.log(rfid);
       switch (rfid.type) {
+        // Server got person RFID
         case 'person':
-          Person.find({}).limit(1).exec(function(err, result) {
+          Person.find({rfid: rfid.rfid}).limit(1).exec(function(err, person) {
             if (err) {
               return res.status(500).json({
-                error: 'Cannot get person'
+                error: 'Error while getting person'
               });
             }
-            console.log(err);
-            console.log(result);
-            res.json(result);
+            if (person.length > 0) {
+              var quest = {};
+              quest.data = person[0];
+              quest.entryTimestamp = Date.now();
+              req.session.person = quest;
+              return res.json('Welcome ' + quest.data.name);
+            }
+            else {
+              return res.status(404).json({
+                message: 'Can\'t get a person.'
+              });
+            }
           });
           break;
+        // Server got resource RFID
         case 'resource':
-          Resource.find({rfid: rfid.rfid}).limit(1).exec(function(err, result) {
-            if (err) {
-              return res.status(500).json({
-                error: 'Cannot get resource'
+          // Check session for person
+          if (req.session.person && req.session.person.hasOwnProperty('entryTimestamp')) {
+            var personEntryDate = req.session.person.entryTimestamp,
+                newDate = Date.now(),
+                datesDiff = newDate - personEntryDate;
+            //@todo: DEL console.log
+            console.log(datesDiff);
+            // User session isn't expired
+            if(datesDiff <= 60000) {
+              Resource.find({rfid: rfid.rfid}).limit(1).exec(function(err, result) {
+                if (err) {
+                  return res.status(500).json({
+                    error: 'Error while getting resource'
+                  });
+                }
+                if(result.length > 0) {
+                  var resource = result[0],
+                      message = (resource.available === true) ? 'Checked out ' : 'Returned ';
+                  resource.available = (resource.available === true) ? false : true;
+                  resource.save(function (err) {
+                    if (err) {
+                      return res.status(500).json({
+                        error: 'Error while updating resource'
+                      });
+                    }
+                    res.send(message + resource.description);
+                  });
+                }
+                else {
+                  return res.status(404).json({
+                    message: 'Can\'t get a resource.'
+                  });
+                }
               });
             }
-            res.json(result);
-          });
+            else {
+              delete req.session.person;
+              return res.status(500).json({
+                error: 'User session is expired'
+              });
+            }
+          }
+          else {
+            return res.status(500).json({
+              error: 'Tap user card to begin'
+            });
+          }
           break;
         default:
           return res.status(500).json({
@@ -113,11 +161,7 @@ var rfidGenerate = function() {
       for( var i=0; i < 10; i++ ) {
         var resource = {};
         resource.category = categories[Math.floor(Math.random() * categories.length)];
-        resource.description = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ' +
-            'ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut ' +
-            'aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore ' +
-            'eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt ' +
-            'mollit anim id est laborum.';
+        resource.description = 'Lorem ipsum dolor ' + i;
         resource.rfid = rfidGenerate();
         resource.available = true;
         resource.created = Date.now();

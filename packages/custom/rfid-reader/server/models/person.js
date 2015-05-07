@@ -32,7 +32,8 @@ var PersonSchema = new Schema({
   updated: {
     type: Date,
     default: Date.now
-  }
+  },
+  versionKey: false
 });
 
 

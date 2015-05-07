@@ -36,7 +36,8 @@ var ResourceSchema = new Schema({
   updated: {
     type: Date,
     default: Date.now()
-  }
+  },
+  versionKey: false
 });
 
 mongoose.model('Resource', ResourceSchema);
