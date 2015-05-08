@@ -35,6 +35,9 @@ $ npm install -g gulp
 $ npm install -g bower
 ```
 
+### GIT
+## Checkout to 'develop' branch
+
 ## Install All required modules
 Go to project directory and install all node js modules:
 ```bash
