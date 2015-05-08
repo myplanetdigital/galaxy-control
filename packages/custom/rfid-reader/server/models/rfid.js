@@ -9,17 +9,17 @@ var mongoose = require('mongoose'),
 /**
  * Article Schema
  */
-var TagSchema = new Schema({
-  _id: Schema.Types.Mixed,
+var RfidSchema = new Schema({
+  rfid: {
+    type: String,
+    required: true,
+    trim: true
+  },
   type: {
     type: String,
     required: true,
     trim: true
-  }
-//  ,
-//  reader: {
-//    type: mongoose.Schema.Types.ObjectId,
-//    ref: 'Reader'
-//  }
+  },
+  versionKey: false
 });
-mongoose.model('Tag', TagSchema);
+mongoose.model('Rfid', RfidSchema);

@@ -7,8 +7,11 @@ module.exports = function(RfidReader, app, auth, database) {
 
   // RFID reader library endpoint route
   app.route('/library')
-      .get(reader.entry)
-      .post()
-      .put()
-      .delete();
+      .get(reader.entry);
+
+  // RFID TEST data CRUD operations
+  app.route('/populate/people')
+      .post(reader.populatePeople);
+  app.route('/populate/resources')
+      .post(reader.populateResources);
 };

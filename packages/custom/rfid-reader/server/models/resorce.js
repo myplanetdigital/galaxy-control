@@ -24,18 +24,20 @@ var ResourceSchema = new Schema({
     type: Boolean,
     default: true
   },
-  tag: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Tag'
+  rfid: {
+    type: String,
+    required: true,
+    trim: true
   },
   created: {
     type: Date,
-    default: Date.now
+    default: Date.now()
   },
   updated: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now()
+  },
+  versionKey: false
 });
 
 mongoose.model('Resource', ResourceSchema);
