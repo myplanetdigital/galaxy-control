@@ -1,4 +1,5 @@
 'use strict';
+/*global $ */
 
 angular.module('mean.rfid-reader')
   .controller('CardRegistrationCtrl', ['$scope', '$http', '$location', function ($scope, $http, $location) {
@@ -16,12 +17,12 @@ angular.module('mean.rfid-reader')
     $scope.registerCard = function (cardType) {
       var params = {rfid: $scope.rfid};
       if (cardType === 'resource') {
-        params['description'] = $scope.resource.description;
-        params['category'] = $scope.resource.category;
+        params.description = $scope.resource.description;
+        params.category = $scope.resource.category;
       }
       else if (cardType === 'person') {
-        params['name'] = $scope.person.name;
-        params['email'] = $scope.person.email;
+        params.name = $scope.person.name;
+        params.email = $scope.person.email;
       }
       
       // Save new card to DB
