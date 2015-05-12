@@ -1,9 +1,11 @@
 <div class="form-card-type">
   <form name="formCardType" ng-controller="CardRegistrationCtrl" ng-submit="registerCard(cardType)">
-    <h1 ng-hide="rfid == null">New ID found.</h1>
-    <h1 ng-show="rfid == null">Couldn't recognise RFID. Please, try again.</h1>
-    <h2 ng-hide="rfid == null">Please, register the new card with ID {{rfid}}</h2>
-    <div class="card-types" ng-hide="rfid == null">
+    <h1 ng-show="(rfid === null)">Couldn't recognise RFID. Please, try again.</h1>
+    <h1 ng-show="registered === true" class="success">ID {{rfid}} was registered as a {{cardType}} successfully.</h1>
+    <h1 ng-show="(!registered)" class="error">This {{rfid}} has already been registered.</h1>
+    <h1 ng-hide="(rfid === null || registered !== 'init')">New ID found.</h1>
+    <h2 ng-hide="(rfid === null || registered !== 'init')">Please, register the new card with ID {{rfid}}</h2>
+    <div class="card-types" ng-hide="(rfid === null || registered !== 'init')">
       <div class="card-type">
         <span class="card-type-person">
           <label>

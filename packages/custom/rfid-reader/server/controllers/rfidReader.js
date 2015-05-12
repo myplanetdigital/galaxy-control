@@ -20,7 +20,7 @@ exports.entry = function(req, res) {
         error: 'Cannot get RFID'
       });
     }
-    // If query result contain data (array not empty) RFID is exists in database
+    // If query result contains data (array is not empty), RFID exists in database
     if (result.length > 0) {
       var rfid = result[0];
       switch (rfid.type) {
@@ -55,7 +55,7 @@ exports.entry = function(req, res) {
                 datesDiff = newDate - personEntryDate;
             //@todo: DEL console.log
             console.log(datesDiff);
-            // User session isn't expired
+            // User session expired
             if(datesDiff <= 60000) {
               Resource.find({rfid: rfid.rfid}).limit(1).exec(function(err, result) {
                 if (err) {
@@ -86,7 +86,7 @@ exports.entry = function(req, res) {
             else {
               delete req.session.person;
               return res.status(500).json({
-                error: 'User session is expired'
+                error: 'User session expired'
               });
             }
           }
@@ -105,9 +105,9 @@ exports.entry = function(req, res) {
     // RFID does not exist in database so send a message and open a registration page
     else {
       openPage('http://' + req.headers.host + '/#!/card-registration?rfid=' + reqId);
-//      res.status(404).json({
-//        message: 'ID not found.'
-//      });
+      res.status(404).json({
+        message: 'ID is not found.'
+      });
     }
   });
 };
@@ -149,7 +149,8 @@ var rfidGenerate = function() {
         rfid.rfid = data[i].rfid;
         if(data[i].hasOwnProperty('email')) {
           rfid.type = 'person';
-        } else {
+        }
+        else {
           rfid.type = 'resource';
         }
         rfids.push(rfid);
@@ -203,7 +204,8 @@ exports.populateResources = function(req, res) {
     if (err) {
       console.log('Resources population ERROR');
       console.log(err);
-    } else {
+    }
+    else {
       if(data.length > 0) {
         var rfids = rfidsTestData(data);
         Rfid.collection.insert(rfids, function(err, docs) {
@@ -213,6 +215,80 @@ exports.populateResources = function(req, res) {
           res.json(data);
         });
       }
+    }
+  });
+};
+
+/**
+ * Save new resource RFID
+ */
+exports.saveResource = function(req, res) {
+  Rfid.find({rfid: req.body.rfid}).limit(1).exec(function(err, result) {
+    if (err) {
+      return res.status(500).json({
+        error: 'Cannot get RFID'
+      });
+    }
+    if (result.length > 0) {
+      return res.status(409).json({
+        error: 'This RFID has already been registered.'
+      });
+    }
+    else {
+      var rfidData = {
+        rfid: req.body.rfid,
+        type: 'resource'
+      };
+      Rfid.collection.insert(rfidData, function(err, docs) {
+        if (err) console.log('Resource RFID insertion ERROR');
+        console.info('Resource RFID was stored successfully.', docs.length);
+        Resource.collection.insert(req.body, function(err, data) {
+          if (err) {
+            console.log('Resource insertion ERROR');
+            console.log(err);
+          }
+          else {
+            res.json(data);
+          }
+        });
+      });
+    }
+  });
+};
+
+/**
+ * Save new person RFID
+ */
+exports.savePerson = function(req, res) {
+  Rfid.find({rfid: req.body.rfid}).limit(1).exec(function(err, result) {
+    if (err) {
+      return res.status(500).json({
+        error: 'Cannot get RFID'
+      });
+    }
+    if (result.length > 0) {
+      return res.status(409).json({
+        error: 'This RFID has already been registered.'
+      });
+    }
+    else {
+      var rfidData = {
+        rfid: req.body.rfid,
+        type: 'person'
+      };
+      Rfid.collection.insert(rfidData, function(err, docs) {
+        if (err) console.log('Person RFID insertion ERROR');
+        console.info('Person RFID was stored successfully.', docs.length);
+        Person.collection.insert(req.body, function(err, data) {
+          if (err) {
+            console.log('Person insertion ERROR');
+            console.log(err);
+          }
+          else {
+            res.json(data);
+          }
+        });
+      });
     }
   });
 };
