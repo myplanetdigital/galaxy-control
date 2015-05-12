@@ -4,20 +4,20 @@
  * Module dependencies.
  */
 var mongoose = require('mongoose'),
-    openPage = require('open'),
-    Person = mongoose.model('Person'),
-    Resource = mongoose.model('Resource'),
-    Rfid = mongoose.model('Rfid');
+        openPage = require('open'),
+        Person = mongoose.model('Person'),
+        Resource = mongoose.model('Resource'),
+        Rfid = mongoose.model('Rfid');
 
 /**
  * RFID reader first request handler
  */
-exports.entry = function(req, res) {
+exports.entry = function (req, res) {
   var reqId = req.param('rfid');
-  Rfid.find({rfid: reqId}).limit(1).exec(function(err, result) {
+  Rfid.find({rfid: reqId}).limit(1).exec(function (err, result) {
     if (err) {
       return res.status(500).json({
-        error: 'Cannot get RFID'
+        error: 'Cannot get RFID.'
       });
     }
     // If query result contains data (array is not empty), RFID exists in database
@@ -26,10 +26,10 @@ exports.entry = function(req, res) {
       switch (rfid.type) {
         // Server got person RFID
         case 'person':
-          Person.find({rfid: rfid.rfid}).limit(1).exec(function(err, person) {
+          Person.find({rfid: rfid.rfid}).limit(1).exec(function (err, person) {
             if (err) {
               return res.status(500).json({
-                error: 'Error while getting person'
+                error: 'Error while getting person.'
               });
             }
             if (person.length > 0) {
@@ -46,33 +46,37 @@ exports.entry = function(req, res) {
             }
           });
           break;
-        // Server got resource RFID
+          // Server got resource RFID
         case 'resource':
           // Check session for person
           if (req.session.person && req.session.person.hasOwnProperty('entryTimestamp')) {
             var personEntryDate = req.session.person.entryTimestamp,
-                newDate = Date.now(),
-                datesDiff = newDate - personEntryDate;
+                    newDate = Date.now(),
+                    datesDiff = newDate - personEntryDate;
             //@todo: DEL console.log
             console.log(datesDiff);
             // User session expired
-            if(datesDiff <= 60000) {
+            if (datesDiff <= 60000) {
               // Update person entry timestamp
               req.session.person.entryTimestamp = Date.now();
-              Resource.find({rfid: rfid.rfid}).limit(1).exec(function(err, result) {
+              // Change the resource's availability status
+              Resource.find({rfid: rfid.rfid}).limit(1).exec(function (err, result) {
                 if (err) {
                   return res.status(500).json({
-                    error: 'Error while getting resource'
+                    error: 'Error while getting resource.'
                   });
                 }
-                if(result.length > 0) {
+                if (result.length > 0) {
                   var resource = result[0],
-                      message = (resource.available === true) ? 'Checked out ' : 'Returned ';
+                          message = (resource.available === true) ? 'Checked out ' : 'Returned ';
+
                   resource.available = (resource.available === true) ? false : true;
+                  resource.updated = Date.now();
+                  resource.person_rfid = req.session.person.data.rfid;
                   resource.save(function (err) {
                     if (err) {
                       return res.status(500).json({
-                        error: 'Error while updating resource'
+                        error: 'Error while updating resource.'
                       });
                     }
                     res.send(message + resource.description);
@@ -88,19 +92,19 @@ exports.entry = function(req, res) {
             else {
               delete req.session.person;
               return res.status(500).json({
-                error: 'User session expired'
+                error: 'User session expired.'
               });
             }
           }
           else {
             return res.status(500).json({
-              error: 'Tap user card to begin'
+              error: 'Tap user card to begin.'
             });
           }
           break;
         default:
           return res.status(500).json({
-            error: 'Wrong RFID type'
+            error: 'Wrong RFID type.'
           });
       }
     }
@@ -115,81 +119,80 @@ exports.entry = function(req, res) {
 };
 
 /**
- *
  * TEST DATA POPULATION !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  */
-var rfidGenerate = function() {
-      var text = '';
-      var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-      /*jslint plusplus: true */
-      for( var i=0; i < 16; i++ )
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
+var rfidGenerate = function () {
+  var text = '';
+  var possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  /*jslint plusplus: true */
+  for (var i = 0; i < 16; i++)
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
 
-      return text;
-    },
-    peopleTestData = function() {
-      var names = ['Dwingar', 'Thrim', 'Dalni', 'Groi', 'Thortil', 'Roy', 'Tarce', 'Houston', 'Grange', 'Ryson'],
-          persons = [];
-      /*jslint plusplus: true */
-      for( var i=0; i < 5; i++ ) {
-        var person = {};
-        person.name = names[Math.floor(Math.random() * names.length)];
-        person.email = person.name + '@local.com';
-        person.rfid = rfidGenerate();
-        person.created = Date.now();
-        person.updated = Date.now();
-        persons.push(person);
-      }
+  return text;
+},
+        peopleTestData = function () {
+          var names = ['Dwingar', 'Thrim', 'Dalni', 'Groi', 'Thortil', 'Roy', 'Tarce', 'Houston', 'Grange', 'Ryson'],
+                  persons = [];
+          /*jslint plusplus: true */
+          for (var i = 0; i < 5; i++) {
+            var person = {};
+            person.name = names[Math.floor(Math.random() * names.length)];
+            person.email = person.name + '@local.com';
+            person.rfid = rfidGenerate();
+            person.created = Date.now();
+            person.updated = Date.now();
+            persons.push(person);
+          }
 
-      return persons;
-    },
-    rfidsTestData = function(data) {
-      var rfids = [];
-      /*jslint plusplus: true */
-      for( var i=0; i < data.length; i++ ) {
-        var rfid = {};
-        rfid.rfid = data[i].rfid;
-        if(data[i].hasOwnProperty('email')) {
-          rfid.type = 'person';
-        }
-        else {
-          rfid.type = 'resource';
-        }
-        rfids.push(rfid);
-      }
-      return rfids;
-    },
-    resourcesTestData = function() {
-      var categories = ['Agriculture', 'Architecture', 'Business', 'Medical', 'Humor', 'Philosophy', 'Education', 'IT'],
-          resources = [];
-      /*jslint plusplus: true */
-      for( var i=0; i < 10; i++ ) {
-        var resource = {};
-        resource.category = categories[Math.floor(Math.random() * categories.length)];
-        resource.description = 'Lorem ipsum dolor ' + i;
-        resource.rfid = rfidGenerate();
-        resource.available = true;
-        resource.created = Date.now();
-        resource.updated = Date.now();
-        console.log(resource);
-        resources.push(resource);
-      }
+          return persons;
+        },
+        rfidsTestData = function (data) {
+          var rfids = [];
+          /*jslint plusplus: true */
+          for (var i = 0; i < data.length; i++) {
+            var rfid = {};
+            rfid.rfid = data[i].rfid;
+            if (data[i].hasOwnProperty('email')) {
+              rfid.type = 'person';
+            }
+            else {
+              rfid.type = 'resource';
+            }
+            rfids.push(rfid);
+          }
 
-      return resources;
-    };
+          return rfids;
+        },
+        resourcesTestData = function () {
+          var categories = ['Agriculture', 'Architecture', 'Business', 'Medical', 'Humor', 'Philosophy', 'Education', 'IT'],
+                  resources = [];
+          /*jslint plusplus: true */
+          for (var i = 0; i < 10; i++) {
+            var resource = {};
+            resource.description = 'Lorem ipsum dolor ' + i;
+            resource.category = categories[Math.floor(Math.random() * categories.length)];
+            resource.available = true;
+            resource.rfid = rfidGenerate();
+            resource.person_rfid = 'new';
+            resource.created = Date.now();
+            resource.updated = Date.now();
+            resources.push(resource);
+          }
 
-exports.populatePeople = function(req, res) {
+          return resources;
+        };
+
+exports.populatePeople = function (req, res) {
   var persons = peopleTestData();
 
-  Person.collection.insert(persons, function(err, people) {
+  Person.collection.insert(persons, function (err, people) {
     if (err)
-      console.log('People population ERROR');
-
-    if(people.length > 0) {
+      console.log('People population ERROR.');
+    if (people.length > 0) {
       var rfids = rfidsTestData(people);
-      Rfid.collection.insert(rfids, function(err, docs) {
+      Rfid.collection.insert(rfids, function (err, docs) {
         if (err)
-          console.log('People RFIDS population ERROR');
+          console.log('People RFIDS population ERROR.');
         console.info('%d people were successfully stored.', docs.length);
         res.json(people);
       });
@@ -199,20 +202,20 @@ exports.populatePeople = function(req, res) {
 
 };
 
-exports.populateResources = function(req, res) {
+exports.populateResources = function (req, res) {
   var resources = resourcesTestData();
 
-  Resource.collection.insert(resources, function(err, data) {
+  Resource.collection.insert(resources, function (err, data) {
     if (err) {
-      console.log('Resources population ERROR');
+      console.log('Resources population ERROR.');
       console.log(err);
     }
     else {
-      if(data.length > 0) {
+      if (data.length > 0) {
         var rfids = rfidsTestData(data);
-        Rfid.collection.insert(rfids, function(err, docs) {
+        Rfid.collection.insert(rfids, function (err, docs) {
           if (err)
-            console.log('Resources RFIDS population ERROR');
+            console.log('Resources RFIDS population ERROR.');
           console.info('%d resources were successfully stored.', docs.length);
           res.json(data);
         });
@@ -224,11 +227,11 @@ exports.populateResources = function(req, res) {
 /**
  * Save new resource RFID
  */
-exports.saveResource = function(req, res) {
-  Rfid.find({rfid: req.body.rfid}).limit(1).exec(function(err, result) {
+exports.saveResource = function (req, res) {
+  Rfid.find({rfid: req.body.rfid}).limit(1).exec(function (err, result) {
     if (err) {
       return res.status(500).json({
-        error: 'Cannot get RFID'
+        error: 'Cannot get RFID.'
       });
     }
     if (result.length > 0) {
@@ -241,12 +244,13 @@ exports.saveResource = function(req, res) {
         rfid: req.body.rfid,
         type: 'resource'
       };
-      Rfid.collection.insert(rfidData, function(err, docs) {
-        if (err) console.log('Resource RFID insertion ERROR');
+      Rfid.collection.insert(rfidData, function (err, docs) {
+        if (err)
+          console.log('Resource RFID insertion ERROR.');
         console.info('Resource RFID was stored successfully.', docs.length);
         Resource.collection.insert(req.body, function(err, data) {
           if (err) {
-            console.log('Resource insertion ERROR');
+            console.log('Resource insertion ERROR.');
             console.log(err);
           }
           else {
@@ -261,11 +265,11 @@ exports.saveResource = function(req, res) {
 /**
  * Save new person RFID
  */
-exports.savePerson = function(req, res) {
-  Rfid.find({rfid: req.body.rfid}).limit(1).exec(function(err, result) {
+exports.savePerson = function (req, res) {
+  Rfid.find({rfid: req.body.rfid}).limit(1).exec(function (err, result) {
     if (err) {
       return res.status(500).json({
-        error: 'Cannot get RFID'
+        error: 'Cannot get RFID.'
       });
     }
     if (result.length > 0) {
@@ -278,8 +282,9 @@ exports.savePerson = function(req, res) {
         rfid: req.body.rfid,
         type: 'person'
       };
-      Rfid.collection.insert(rfidData, function(err, docs) {
-        if (err) console.log('Person RFID insertion ERROR');
+      Rfid.collection.insert(rfidData, function (err, docs) {
+        if (err)
+          console.log('Person RFID insertion ERROR.');
         console.info('Person RFID was stored successfully.', docs.length);
         Person.collection.insert(req.body, function(err, data) {
           if (err) {
@@ -290,6 +295,60 @@ exports.savePerson = function(req, res) {
             res.json(data);
           }
         });
+      });
+    }
+  });
+};
+
+/**
+ * Get rosourse's statuses
+ */
+exports.resourceStatus = function (req, res) {
+  Rfid.find(function (err, rfids) {
+    if (err) {
+      return res.status(500).json({
+        error: 'Cannot get RFIDs.'
+      });
+    }
+    if (rfids.length > 0) {
+      var resources_rfids_arr = [],
+          people_rfids_arr = [];
+      /*jslint plusplus: true */
+      for (var i = 0; i < rfids.length; i++) {
+        if (rfids[i].type === 'resource') {
+          resources_rfids_arr.push(rfids[i].rfid);
+        }
+        else if (rfids[i].type === 'person') {
+          people_rfids_arr.push(rfids[i].rfid);
+        }
+      }
+      
+      Resource.find({rfid: {$in: resources_rfids_arr}}, function (err, resources) {
+        if (err) {
+          return res.status(500).json({
+            error: 'Cannot get resources by its RFIDs.'
+          });
+        }
+
+        Person.find({rfid: {$in: people_rfids_arr}}, function (err, people) {
+          if (err) {
+            return res.status(500).json({
+              error: 'Cannot get people by their RFIDs.'
+            });
+          }
+
+          var dataForLibraryStatus = {
+            resources: resources,
+            people: people
+          };
+
+          res.json(dataForLibraryStatus);
+        });
+      });
+    }
+    else {
+      res.status(404).json({
+        message: 'No RFID was found.'
       });
     }
   });

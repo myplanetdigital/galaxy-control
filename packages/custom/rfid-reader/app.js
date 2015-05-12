@@ -25,6 +25,7 @@ RfidReader.register(function(app, auth, database) {
   });
   
   RfidReader.aggregateAsset('css', 'cardRegister.css');
+  RfidReader.aggregateAsset('css', 'resourceStatus.css');
 
   /**
     //Uncomment to use. Requires meanio@0.3.7 or above

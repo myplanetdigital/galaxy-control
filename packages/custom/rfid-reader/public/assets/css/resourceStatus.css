@@ -1,0 +1,25 @@
+.resource-status table {
+  width: 100%;
+}
+
+.resource-status table td,
+.resource-status table th {
+  border: 1px solid black;
+  padding: 5px;
+}
+
+.resource-status .col-1 {
+  width: 50%;
+}
+
+.resource-status .col-2 {
+  width: 10%;
+}
+
+.resource-status .col-3 {
+  width: 15%;
+}
+
+.resource-status .col-4 {
+  width: 25%;
+}

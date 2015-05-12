@@ -29,6 +29,11 @@ var ResourceSchema = new Schema({
     required: true,
     trim: true
   },
+  person_rfid: {
+    type: String,
+    required: true,
+    trim: true
+  },
   created: {
     type: Date,
     default: Date.now()

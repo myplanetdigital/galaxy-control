@@ -1,0 +1,20 @@
+<div class="resource-status" ng-controller="ResourceStatusCtrl">
+  <table>
+    <thead>
+      <tr>
+        <th class="col-1">Resource</th>
+        <th class="col-2">Status</th>
+        <th class="col-3">When</th>
+        <th class="col-4">By whom</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr ng-repeat="summary in resourceStatusSummary">
+        <td>{{summary.resource.description}}</td>
+        <td>{{summary.resource.available ? 'returned' : 'checked out'}}</td>
+        <td>{{summary.resource.updated === summary.resource.created ? 'never' : summary.resource.updated | date:'dd.MM.yyyy HH:mm:ss'}}</td>
+        <td>{{summary.person ? summary.person.name : 'nobody'}}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

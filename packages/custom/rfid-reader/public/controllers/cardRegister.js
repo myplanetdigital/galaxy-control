@@ -26,6 +26,7 @@ angular.module('mean.rfid-reader')
         params.description = $scope.resource.description;
         params.category = $scope.resource.category;
         params.available = true;
+        params.person_rfid = 'new';
       }
       else if (cardType === 'person') {
         params.name = $scope.person.name;
@@ -35,12 +36,12 @@ angular.module('mean.rfid-reader')
       // Save new card to DB
       $http.defaults.headers.post = {'Content-Type': 'application/x-www-form-urlencoded'};
       $http.post('/library/' + cardType, $.param(params))
-      .success(function (data, status, headers, config) {
-        $scope.registered = true;
-      })
-      .error(function (data, status, headers, config) {
-        $scope.registered = false;
-      });
+          .success(function (data, status, headers, config) {
+            $scope.registered = true;
+          })
+          .error(function (data, status, headers, config) {
+            $scope.registered = false;
+          });
       
     };
 
