@@ -57,6 +57,8 @@ exports.entry = function(req, res) {
             console.log(datesDiff);
             // User session expired
             if(datesDiff <= 60000) {
+              // Update person entry timestamp
+              req.session.person.entryTimestamp = Date.now();
               Resource.find({rfid: rfid.rfid}).limit(1).exec(function(err, result) {
                 if (err) {
                   return res.status(500).json({
