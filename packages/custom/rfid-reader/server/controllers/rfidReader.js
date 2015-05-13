@@ -5,13 +5,16 @@
  */
 var mongoose = require('mongoose'),
     openPage = require('open'),
+    mean = require('meanio'),
+    url = require('url'),
+    
     Person = mongoose.model('Person'),
     Resource = mongoose.model('Resource'),
     Rfid = mongoose.model('Rfid'),
-    mean = require('meanio'),
+    Log = mongoose.model('Log'),
+    
     config = mean.loadConfig(),
-    endpoints = config.endpoints,
-    url = require('url');
+    endpoints = config.endpoints;
     
 var getEndpointByPath = function(url) {
       for (var key in endpoints) {
@@ -22,6 +25,51 @@ var getEndpointByPath = function(url) {
         }
       }
     };
+    
+// Log an entry to endpont
+var logEndpoint = function (cardData, endpointUrl) {
+  var cardDataAttrs = Object.keys(cardData._doc),
+      nonDescrAttrs = ['_id', 'created', 'updated', 'rfid', 'available', 'person_rfid'];
+      
+  // Get a list of attributes for a log description
+  /*jslint plusplus: true */
+  for (var i = 0; i < nonDescrAttrs.length; i++) {
+    // Find index of an attribute
+    var index = cardDataAttrs.indexOf(nonDescrAttrs[i]);
+    // Remove the attribute from the array
+    if(index !== -1) {
+      cardDataAttrs.splice(index, 1);
+    }
+  }
+  
+  // Create log description
+  var description = '';
+  /*jslint plusplus: true */
+  for (var j = 0; j < cardDataAttrs.length; j++) {
+    description += cardDataAttrs[j] + ': ' + cardData._doc[cardDataAttrs[j]];
+    if (j !== cardDataAttrs.length - 1) description += '; ';
+  }
+  
+  // Create log object
+  var log = {
+    rfid: cardData._doc.rfid,
+    timestamp: Date.now(),
+    description: description,
+    endpoint: endpointUrl.substring(1)
+  };
+  
+  // Save log to database
+  Log.collection.insert(log, function(err, data) {
+    if (err) {
+      console.log('Log insertion ERROR.');
+      console.log(err);
+    }
+    else {
+      console.log('Log insertion SUCCESS.');
+    }
+  });
+};
+    
 
 /**
  * RFID reader first request handler
@@ -40,7 +88,9 @@ exports.entry = function (req, res) {
     // If query result contains data (array is not empty), RFID exists in database
     if (result.length > 0) {
       var rfid = result[0];
+      
       switch (rfid.type) {
+        
         // Server got person RFID
         case 'person':
           Person.find({rfid: rfid.rfid}).limit(1).exec(function (err, person) {
@@ -49,12 +99,17 @@ exports.entry = function (req, res) {
                 error: 'Error while getting person.'
               });
             }
+            // If person exests
             if (person.length > 0) {
-              var quest = {};
-              quest.data = person[0];
-              quest.entryTimestamp = Date.now();
-              req.session.person = quest;
-              return res.json(endpoint.message + ' ' + quest.data.name);
+              var guest = {};
+              guest.data = person[0];
+              guest.entryTimestamp = Date.now();
+              req.session.person = guest;
+              
+              // Log the person entry
+              logEndpoint(guest.data, endpoint.url);
+              
+              return res.json(endpoint.message + ', ' + guest.data.name);
             }
             else {
               return res.status(404).json({
@@ -63,20 +118,22 @@ exports.entry = function (req, res) {
             }
           });
           break;
-          // Server got resource RFID
+          
+        // Server got resource RFID
         case 'resource':
           // Check session for person
           if (req.session.person && req.session.person.hasOwnProperty('entryTimestamp')) {
             var personEntryDate = req.session.person.entryTimestamp,
-                    newDate = Date.now(),
-                    datesDiff = newDate - personEntryDate;
-            //@todo: DEL console.log
-            console.log(datesDiff);
-            // User session expired
+                newDate = Date.now(),
+                datesDiff = newDate - personEntryDate;
+            
+            // If user session hasn't expired yet,
+            // update its timestamp, resource status and send a message
             if (datesDiff <= 60000) {
               // Update person entry timestamp
               req.session.person.entryTimestamp = Date.now();
-              // Change the resource's availability status
+              
+              // Change the resource status
               Resource.find({rfid: rfid.rfid}).limit(1).exec(function (err, result) {
                 if (err) {
                   return res.status(500).json({
@@ -85,7 +142,10 @@ exports.entry = function (req, res) {
                 }
                 if (result.length > 0) {
                   var resource = result[0],
-                          message = (resource.available === true) ? 'Checked out ' : 'Returned ';
+                      message = (resource.available === true) ? 'Checked out ' : 'Returned ';
+                      
+                  // Log the resource entry
+                  logEndpoint(resource, endpoint.url);
 
                   resource.available = (resource.available === true) ? false : true;
                   resource.updated = Date.now();
@@ -106,6 +166,8 @@ exports.entry = function (req, res) {
                 }
               });
             }
+            // If user session has already expired
+            // remove the session and send a message
             else {
               delete req.session.person;
               return res.status(500).json({
@@ -119,6 +181,7 @@ exports.entry = function (req, res) {
             });
           }
           break;
+          
         default:
           return res.status(500).json({
             error: 'Wrong RFID type.'

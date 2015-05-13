@@ -48,9 +48,9 @@ module.exports = {
   // Active endpoints
   endpoints: [
     {
-      description: 'An library',
+      description: 'A library',
       url: '/library',
-      message: 'Welcome to library endpoint'
+      message: 'Welcome to the library endpoint'
     },
     {
       description: 'An endpoint',
