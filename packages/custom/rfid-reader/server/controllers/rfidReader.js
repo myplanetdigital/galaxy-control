@@ -4,17 +4,34 @@
  * Module dependencies.
  */
 var mongoose = require('mongoose'),
-        openPage = require('open'),
-        Person = mongoose.model('Person'),
-        Resource = mongoose.model('Resource'),
-        Rfid = mongoose.model('Rfid');
+    openPage = require('open'),
+    Person = mongoose.model('Person'),
+    Resource = mongoose.model('Resource'),
+    Rfid = mongoose.model('Rfid'),
+    mean = require('meanio'),
+    config = mean.loadConfig(),
+    endpoints = config.endpoints,
+    url = require('url');
+    
+var getEndpointByPath = function(url) {
+      for (var key in endpoints) {
+        if (endpoints.hasOwnProperty(key)) {
+          var endpoint = endpoints[key];
+          if (endpoint.url === url)
+            return endpoint;
+        }
+      }
+    };
 
 /**
  * RFID reader first request handler
  */
 exports.entry = function (req, res) {
   var reqId = req.param('rfid');
-  Rfid.find({rfid: reqId}).limit(1).exec(function (err, result) {
+  var path = url.parse(req.url).pathname;
+  var endpoint = getEndpointByPath(path);
+
+  Rfid.find({rfid: reqId}).limit(1).exec(function(err, result) {
     if (err) {
       return res.status(500).json({
         error: 'Cannot get RFID.'
@@ -37,7 +54,7 @@ exports.entry = function (req, res) {
               quest.data = person[0];
               quest.entryTimestamp = Date.now();
               req.session.person = quest;
-              return res.json('Welcome ' + quest.data.name);
+              return res.json(endpoint.message + ' ' + quest.data.name);
             }
             else {
               return res.status(404).json({

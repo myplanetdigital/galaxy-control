@@ -43,5 +43,19 @@ module.exports = {
   },
 
   // The session cookie name
-  sessionName: 'connect.sid'
+  sessionName: 'connect.sid',
+
+  // Active endpoints
+  endpoints: [
+    {
+      description: 'An library',
+      url: '/library',
+      message: 'Welcome to library endpoint'
+    },
+    {
+      description: 'An endpoint',
+      url: '/smth',
+      message: 'Welcome there'
+    }
+  ]
 };
